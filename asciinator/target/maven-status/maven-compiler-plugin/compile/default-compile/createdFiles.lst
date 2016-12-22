@@ -1,9 +1,0 @@
-org\snowjak\asciinator\ConsoleApp.class
-org\snowjak\asciinator\subdivision\Subdivision1x1.class
-org\snowjak\asciinator\subdivision\Subdivision3x3.class
-org\snowjak\asciinator\Character.class
-org\snowjak\asciinator\subdivision\GridSquareSubdivisionScheme.class
-org\snowjak\asciinator\CharacterSet.class
-org\snowjak\asciinator\GridSquareDefinition.class
-org\snowjak\asciinator\Coverage.class
-org\snowjak\asciinator\subdivision\Subdivision2x2.class
