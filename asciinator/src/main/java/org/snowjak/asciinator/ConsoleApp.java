@@ -7,11 +7,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.snowjak.asciinator.subdivision.GridSquareSubdivisionScheme;
-import org.snowjak.asciinator.subdivision.Subdivision3x3;
+import org.snowjak.asciinator.subdivision.Subdivision2x2;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Pair;
@@ -30,10 +32,12 @@ public class ConsoleApp extends Application {
 	public void start(Stage primaryStage) throws Exception {
 
 		Font font = new Font("Courier New", 32d);
-		Class<? extends GridSquareSubdivisionScheme> subdivisionScheme = Subdivision3x3.class;
+		Class<? extends GridSquareSubdivisionScheme> subdivisionScheme = Subdivision2x2.class;
 
-		for (String s : asciinate(new Image("googlelogo_color_272x92dp.png"), 4, 6, font, subdivisionScheme,
-				CharacterSet.instantiate(CharacterSet.DEFAULT_CHARACTERS, font, subdivisionScheme), 1d, 3)) {
+		for (String s : asciinate(
+				new Image("googlelogo_color_272x92dp.png"), 6, 12, font,
+				subdivisionScheme, CharacterSet.instantiate(CharacterSet.DEFAULT_CHARACTERS, font, subdivisionScheme),
+				0.25, 3)) {
 			System.out.println(s);
 		}
 
@@ -44,16 +48,40 @@ public class ConsoleApp extends Application {
 			int sourceGridSquarePixelHeight, Font font, Class<? extends GridSquareSubdivisionScheme> subdivisionScheme,
 			CharacterSet characterSet, double imageGamma, int finalCharacterSelectionPoolSize) {
 
+		if (sourceImage.isError())
+			throw new RuntimeException(
+					"Cannot ascii-ate this image! -- " + sourceImage.getException().getClass().getName() + ": "
+							+ sourceImage.getException().getMessage());
+
 		List<String> result = new LinkedList<>();
 
+		double imageMinimumLuminance = Double.MAX_VALUE, imageMaximumLuminance = 0d;
+
+		System.out.println("Pre-processing the image ...");
+		PixelReader sourceImageReader = sourceImage.getPixelReader();
+		for (int imageX = 0; imageX < sourceImage.getWidth(); imageX++)
+			for (int imageY = 0; imageY < sourceImage.getHeight(); imageY++) {
+
+				Color pixelColor = sourceImageReader.getColor(imageX, imageY);
+
+				double grayscaleLuminance = 1d - (Math.pow(pixelColor.getRed(), imageGamma) * 0.2126d
+						+ Math.pow(pixelColor.getGreen(), imageGamma) * 0.7152d
+						+ Math.pow(pixelColor.getBlue(), imageGamma) * 0.0722d);
+				grayscaleLuminance *= pixelColor.getOpacity();
+
+				imageMinimumLuminance = Math.min(imageMinimumLuminance, grayscaleLuminance);
+				imageMaximumLuminance = Math.max(imageMaximumLuminance, grayscaleLuminance);
+			}
+
+		System.out.println("Finding the ASCII-inated version of the image ...");
 		for (int imageY = 0; imageY < sourceImage.getHeight(); imageY += sourceGridSquarePixelHeight) {
 
 			StringBuilder currentLine = new StringBuilder();
 
 			for (int imageX = 0; imageX < sourceImage.getWidth(); imageX += sourceGridSquarePixelWidth) {
 
-				int endImageX = Math.min((int) sourceImage.getWidth(), imageX + sourceGridSquarePixelWidth);
-				int endImageY = Math.min((int) sourceImage.getHeight(), imageY + sourceGridSquarePixelHeight);
+				int endImageX = imageX + sourceGridSquarePixelWidth;
+				int endImageY = imageY + sourceGridSquarePixelHeight;
 
 				Coverage imageCoverage = new Coverage(sourceImage, imageX, imageY, endImageX, endImageY,
 						subdivisionScheme, imageGamma);
@@ -63,15 +91,19 @@ public class ConsoleApp extends Application {
 
 					double distance = 0;
 
-					distance += Math.pow(c.getCoverage().getCoverage() - imageCoverage.getCoverage(), 2d);
-
 					for (Entry<? extends GridSquareSubdivisionScheme, Double> characterSubdividedCoverage : c
 							.getCoverage().getSubdivisionCoverage().entrySet()) {
 
 						if (imageCoverage.getSubdivisionCoverage().containsKey(characterSubdividedCoverage.getKey())) {
-							double characterCoverageValue = characterSubdividedCoverage.getValue();
-							double imageCoverageValue = imageCoverage.getSubdivisionCoverage()
-									.get(characterSubdividedCoverage.getKey());
+
+							double characterCoverageValue = (characterSubdividedCoverage.getValue()
+									/ (characterSet.getMaxCoverage() - characterSet.getMinCoverage()))
+									+ characterSet.getMinCoverage();
+
+							double imageCoverageValue = (imageCoverage.getSubdivisionCoverage()
+									.get(characterSubdividedCoverage.getKey())
+									/ (imageMaximumLuminance - imageMinimumLuminance)) + imageMinimumLuminance;
+
 							distance += Math.pow(characterCoverageValue - imageCoverageValue, 2d);
 						}
 

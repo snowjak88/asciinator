@@ -3,6 +3,7 @@ package org.snowjak.asciinator;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.snowjak.asciinator.subdivision.GridSquareSubdivisionScheme;
 
@@ -55,6 +56,8 @@ public class CharacterSet {
 
 	private final Set<Character> characters;
 
+	private final double minCoverage, maxCoverage;
+
 	/**
 	 * Construct a new CharacterSet from the given collection of
 	 * {@link Character} instances.
@@ -65,6 +68,34 @@ public class CharacterSet {
 	public CharacterSet(Character... characters) {
 		this.characters = new HashSet<>();
 		this.characters.addAll(Arrays.asList(characters));
+
+		this.minCoverage = this.characters.stream()
+				.map(c -> c.getCoverage().getCoverage() + c.getCoverage()
+						.getSubdivisionCoverage()
+						.values()
+						.stream()
+						.collect(Collectors.summingDouble(d -> d)))
+				.min((d1, d2) -> Double.compare(d1, d2))
+				.orElse(0d);
+
+		this.maxCoverage = this.characters.stream()
+				.map(c -> c.getCoverage().getCoverage() + c.getCoverage()
+						.getSubdivisionCoverage()
+						.values()
+						.stream()
+						.collect(Collectors.summingDouble(d -> d)))
+				.max((d1, d2) -> Double.compare(d1, d2))
+				.orElse(Double.MAX_VALUE);
+
+		System.out.println("Done Initializing Character Set!");
+		System.out.println("Characters:");
+		this.characters.forEach(c -> System.out.println(c.getCharacter() + " --> " + c.getCoverage()
+				.getSubdivisionCoverage()
+				.values()
+				.stream()
+				.collect(Collectors.summingDouble(d -> d))));
+		System.out.println("Minimum coverage: " + minCoverage);
+		System.out.println("Maximum coverage: " + maxCoverage);
 	}
 
 	/**
@@ -74,5 +105,15 @@ public class CharacterSet {
 	public Set<Character> getCharacters() {
 
 		return characters;
+	}
+
+	public double getMinCoverage() {
+
+		return minCoverage;
+	}
+
+	public double getMaxCoverage() {
+
+		return maxCoverage;
 	}
 }

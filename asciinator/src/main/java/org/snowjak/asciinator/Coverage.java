@@ -12,7 +12,6 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
@@ -118,10 +117,10 @@ public class Coverage {
 
 		subdivisionCoverage = new HashMap<>();
 		for (GridSquareSubdivisionScheme s : subdivisionScheme.getEnumConstants()) {
-			int subdivisionStartX = (int) Math.round(((double) endX - (double) startX) * s.getRegionStartX()) + startX;
-			int subdivisionStartY = (int) Math.round(((double) endY - (double) startY) * s.getRegionStartY()) + startY;
-			int subdivisionEndX = (int) Math.round(((double) endX - (double) startX) * s.getRegionEndX()) + startX;
-			int subdivisionEndY = (int) Math.round(((double) endY - (double) startY) * s.getRegionEndY()) + startY;
+			int subdivisionStartX = (int) Math.round(((double) (endX - startX) * s.getRegionStartX())) + startX;
+			int subdivisionStartY = (int) Math.round(((double) (endY - startY) * s.getRegionStartY())) + startY;
+			int subdivisionEndX = (int) Math.round(((double) (endX - startX) * s.getRegionEndX())) + startX;
+			int subdivisionEndY = (int) Math.round(((double) (endY - startY) * s.getRegionEndY())) + startY;
 
 			subdivisionCoverage.put(s, calculateCoverage(imageReader, subdivisionStartX, subdivisionStartY,
 					subdivisionEndX, subdivisionEndY));
@@ -138,15 +137,20 @@ public class Coverage {
 		for (int x = startX; x < endX; x++)
 			for (int y = startY; y < endY; y++) {
 
-				Color pixelColor = pixelReader.getColor(x, y);
-				double grayscaleLuminance = 1d - (Math.pow(pixelColor.getRed(), gamma) * 0.2126d
-						+ Math.pow(pixelColor.getGreen(), gamma) * 0.7152d
-						+ Math.pow(pixelColor.getBlue(), gamma) * 0.0722d);
+				try {
+					Color pixelColor = pixelReader.getColor(x, y);
+					double grayscaleLuminance = 1d - (Math.pow(pixelColor.getRed(), gamma) * 0.2126d
+							+ Math.pow(pixelColor.getGreen(), gamma) * 0.7152d
+							+ Math.pow(pixelColor.getBlue(), gamma) * 0.0722d);
 
-				grayscaleLuminance *= pixelColor.getOpacity();
+					grayscaleLuminance *= pixelColor.getOpacity();
 
-				aggregateLuminance += grayscaleLuminance;
-				pixelsSampled++;
+					aggregateLuminance += grayscaleLuminance;
+					pixelsSampled++;
+
+				} catch (Throwable t) {
+					//
+				}
 
 			}
 
