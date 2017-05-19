@@ -35,7 +35,7 @@ public class ConsoleApp extends Application {
 		Class<? extends GridSquareSubdivisionScheme> subdivisionScheme = Subdivision2x2.class;
 
 		for (String s : asciinate(
-				new Image("googlelogo_color_272x92dp.png"), 6, 12, font,
+				new Image("image-2016-09-07.png"), 6, 12, font,
 				subdivisionScheme, CharacterSet.instantiate(CharacterSet.DEFAULT_CHARACTERS, font, subdivisionScheme),
 				0.25, 3)) {
 			System.out.println(s);
@@ -50,7 +50,7 @@ public class ConsoleApp extends Application {
 
 		if (sourceImage.isError())
 			throw new RuntimeException(
-					"Cannot ascii-ate this image! -- " + sourceImage.getException().getClass().getName() + ": "
+					"Cannot ASCII-inate this image! -- " + sourceImage.getException().getClass().getName() + ": "
 							+ sourceImage.getException().getMessage());
 
 		List<String> result = new LinkedList<>();
